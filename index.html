@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moonwake / CDFI Due Diligence</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --accent: #4f6ef7;
+      --accent-soft: #1e2a5e;
+      --red: #e05252;
+      --red-soft: #3a1a1a;
+      --green: #4caf7d;
+      --green-soft: #1a3a2a;
+      --yellow: #f0b429;
+      --yellow-soft: #3a2e0a;
+      --text: #e2e4ee;
+      --muted: #8890aa;
+      --heading: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; }
+
+    header { border-bottom: 1px solid var(--border); padding: 2rem 0; }
+    .header-inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+    .header-tag { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem; }
+    header h1 { font-size: 1.9rem; font-weight: 700; color: var(--heading); }
+    header p { color: var(--muted); margin-top: 0.4rem; font-size: 0.95rem; }
+
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; display: flex; gap: 0; }
+    nav a { display: block; padding: 1rem 1.25rem; color: var(--muted); text-decoration: none; font-size: 0.875rem; font-weight: 500; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+    nav a:hover { color: var(--text); }
+    nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+
+    section { display: none; }
+    section.active { display: block; }
+
+    .verdict { display: flex; align-items: flex-start; gap: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+    .verdict-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .verdict h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.3rem; }
+    .verdict p { color: var(--text); font-size: 1rem; line-height: 1.6; }
+    .verdict.warn { border-color: #2a2400; background: var(--yellow-soft); }
+    .verdict.danger { border-color: #2a0000; background: var(--red-soft); }
+    .verdict.ok { border-color: #002a15; background: var(--green-soft); }
+
+    h2 { font-size: 1.5rem; font-weight: 700; color: var(--heading); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 600; color: var(--heading); margin: 2rem 0 0.75rem; }
+
+    p { margin-bottom: 1rem; color: var(--text); }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+    .stat-card .num { font-size: 2rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
+    .stat-card .label { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; line-height: 1.4; }
+
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.875rem; }
+    th { background: var(--surface); color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.08em; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-red { background: var(--red-soft); color: var(--red); }
+    .badge-green { background: var(--green-soft); color: var(--green); }
+    .badge-yellow { background: var(--yellow-soft); color: var(--yellow); }
+    .badge-blue { background: var(--accent-soft); color: var(--accent); }
+
+    .callout { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; background: var(--accent-soft); border-radius: 0 6px 6px 0; margin: 1.5rem 0; }
+    .callout.red { border-color: var(--red); background: var(--red-soft); }
+    .callout.yellow { border-color: var(--yellow); background: var(--yellow-soft); }
+    .callout.green { border-color: var(--green); background: var(--green-soft); }
+    .callout strong { color: var(--heading); }
+
+    ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+    ul li { margin-bottom: 0.4rem; }
+
+    .source-list { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-list h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1rem; }
+    .source-list a { display: block; color: var(--muted); font-size: 0.8rem; text-decoration: none; margin-bottom: 0.3rem; }
+    .source-list a:hover { color: var(--accent); }
+
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    @media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: 1fr 1fr; } }
+
+    .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; }
+    .summary-card h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+    .summary-card ul { padding-left: 1.2rem; }
+    .summary-card li { font-size: 0.875rem; margin-bottom: 0.35rem; }
+
+    footer { border-top: 1px solid var(--border); padding: 2rem; text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 4rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-tag">Due Diligence Research · October 2026</div>
+    <h1>Moonwake Technologies / AI-Native CDFI Platform</h1>
+    <p>Independent research on a proposed $75–100M grant to OpenAI Foundation · Confidential</p>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="active" onclick="show('overview',this)">Overview</a>
+    <a href="#" onclick="show('constraints',this)">CDFI Constraints</a>
+    <a href="#" onclick="show('underwriting',this)">AI Underwriting</a>
+    <a href="#" onclick="show('landscape',this)">Tech Landscape</a>
+    <a href="#" onclick="show('verdict',this)">Verdict</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- OVERVIEW -->
+<section id="overview" class="active">
+  <h2>Executive Summary</h2>
+
+  <div class="verdict danger">
+    <div class="verdict-icon">🚨</div>
+    <div>
+      <h3>Core Finding</h3>
+      <p>The operational constraint thesis is <strong>directionally correct but overstated</strong>. The "10x approval rate" claim is <strong>mathematically impossible and empirically unsupported</strong>. Moonwake Technologies appears to be a strategy consultancy — not a fintech — with no publicly visible lending technology. The credit risk architecture (Moonwake takes zero risk; CDFIs bear all losses) creates serious moral hazard.</p>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="num">71%</div>
+      <div class="label">of CDFIs cite staffing as a barrier (Fed Survey 2025)</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">69%</div>
+      <div class="label">cite technology as a barrier — ops constraints outrank capital</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">63%</div>
+      <div class="label">cite lending capital as a barrier — not trivial</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">27%</div>
+      <div class="label">CDFI small business approval rate — 10x = 270%, impossible</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">44%</div>
+      <div class="label">Best documented AI underwriting gain anywhere (Upstart/CFPB)</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">35%</div>
+      <div class="label">Median CDFI self-sufficiency ratio — cannot absorb large loss spikes</div>
+    </div>
+  </div>
+
+  <h3>What Moonwake Proposes</h3>
+  <p>An AI-native affiliate lending platform: Moonwake handles marketing, applications, underwriting, closing, servicing, and customer support. Every loan is made on partner CDFI paper, under its credit policy, with its capital. The ask: $75–100M over three years from OpenAI Foundation for technology, labor, and operations.</p>
+
+  <h3>Three-Year Claims</h3>
+  <table>
+    <thead><tr><th>Claim</th><th>Evidence</th><th>Assessment</th></tr></thead>
+    <tbody>
+      <tr><td>$1B+ in affordable credit originated</td><td>$4–6B undeployed CDFI capital exists; 5–10pp deployment improvement = $1–2B</td><td><span class="badge badge-yellow">Plausible but unproven</span></td></tr>
+      <tr><td>10x increase in application approval rates</td><td>CDFI approval ~27%; 10x = 270%. Best AI gain documented: 27–44%</td><td><span class="badge badge-red">False as stated</span></td></tr>
+      <tr><td>50%+ of CDFI market participating</td><td>No precedent for this adoption rate in any CDFI tech initiative</td><td><span class="badge badge-red">No basis</span></td></tr>
+      <tr><td>Self-sustaining platform post-grant</td><td>No CDFI affiliate lender has achieved self-sufficiency at scale</td><td><span class="badge badge-yellow">Speculative</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout red">
+    <strong>Critical flag:</strong> Moonwake Technologies' public website describes a technology strategy consultancy offering maturity assessments, AI readiness planning, and go-to-market scaling. It contains <strong>no mention of a lending platform, CDFI-specific tools, or any financial services product.</strong>
+  </div>
+</section>
+
+<!-- CDFI CONSTRAINTS -->
+<section id="constraints">
+  <h2>What Actually Constrains CDFI Lending?</h2>
+
+  <div class="callout">
+    <strong>Bottom line:</strong> Operational and capital constraints are roughly co-equal barriers. The evidence does NOT support a clean narrative that CDFIs have capital sitting idle waiting for an operational platform. Both problems are real and intertwined.
+  </div>
+
+  <h3>The Constraint Hierarchy (2025 Federal Reserve CDFI Survey)</h3>
+  <table>
+    <thead><tr><th>Constraint</th><th>CDFIs Citing It</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Inadequate staffing</td><td>71%</td><td>65% can't find qualified candidates; 50% say existing staff lack skills</td></tr>
+      <tr><td>Technology challenges</td><td>69%</td><td>80% cite cost; 72% cite integration difficulty with existing systems</td></tr>
+      <tr><td>Lending capital</td><td>63%</td><td>Not small — 81% expecting capital decreases say they can't meet future demand</td></tr>
+      <tr><td>Borrower affordability</td><td>67%</td><td>Applicants can't afford loan terms — a demand-quality constraint AI can't fix</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Capital Deployment Rates (Aeris, 2025–26)</h3>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num">78%</div><div class="label">Community Facility Lenders deployment ratio</div></div>
+    <div class="stat-card"><div class="num">77%</div><div class="label">Housing Development Lenders deployment ratio</div></div>
+    <div class="stat-card"><div class="num">70%</div><div class="label">Business/Micro Lenders deployment ratio</div></div>
+    <div class="stat-card"><div class="num">$4–6B</div><div class="label">Estimated undeployed capital across the sector</div></div>
+  </div>
+
+  <p>The 22–30% undeployed capital is not purely "available" — CDFIs maintain prudent liquidity reserves. But high Unrestricted Net Asset ratios (30–37% for business lenders) mean larger CDFIs have balance sheet room to leverage further <em>if</em> they had operational capacity.</p>
+
+  <h3>Demand Is Not the Problem</h3>
+  <ul>
+    <li><strong>71%</strong> of CDFIs reported increased demand in 2024; <strong>77%</strong> anticipate demand will rise through 2025</li>
+    <li>Only <strong>33%</strong> said they could fully meet overall demand</li>
+    <li>Target population: <strong>134 million</strong> low-income individuals (42% of the U.S.)</li>
+    <li>Annual small business funding gap: <strong>$87B+</strong> (Federal Reserve estimate)</li>
+    <li>The Leviticus Fund: "a $100 million pipeline right now — we don't have $100 million of capital"</li>
+  </ul>
+
+  <h3>The Federal Environment Is Deteriorating</h3>
+  <div class="callout red">
+    <strong>Trump FY2026 budget proposed a 90% cut to the CDFI Fund</strong> (from $324M to $33M). OMB has disbursed zero award dollars in FY2026 so far. The proposed $100M "Rural Financial Award Program" would require 60% rural activity — sidelining urban CDFIs. The American Banker: "The CDFI boom is over."
+  </div>
+
+  <h3>Size Matters: Two Very Different CDFI Realities</h3>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <h4>Large, well-capitalized CDFIs</h4>
+      <ul>
+        <li>High UNA ratios → balance sheet headroom</li>
+        <li>Operational constraint is more binding</li>
+        <li>Moonwake's thesis is strongest here</li>
+        <li>Most likely to actually adopt a platform</li>
+      </ul>
+    </div>
+    <div class="summary-card">
+      <h4>Small, under-capitalized CDFIs (majority)</h4>
+      <ul>
+        <li>Capital is the binding constraint</li>
+        <li>Platform won't help if they can't lend</li>
+        <li>Too resource-constrained to implement new tech</li>
+        <li>72% struggle with tech integration even with free grants</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="source-list">
+    <h3>Key Sources</h3>
+    <a href="https://www.richmondfed.org/region_communities/regional_data_analysis/cdfi_survey/survey_results/cdfi_survey_key_findings_2025" target="_blank">2025 Federal Reserve CDFI Survey Key Findings</a>
+    <a href="https://www.aerisinsight.com/2026/04/30/cdfis-have-solid-2025-operating-results-showing-resilience-despite-numerous-challenges-while-capital-foundations-remain-strong-growth-appears-to-slow/" target="_blank">Aeris: CDFIs Have Solid 2025 Operating Results (Apr 2026)</a>
+    <a href="https://www.ofn.org/cdfi-research-update-member-capitalization-patterns-and-trends-2020-2024/" target="_blank">OFN: CDFI Capitalization Patterns and Trends 2020–2024</a>
+    <a href="https://www.richmondfed.org/publications/research/economic_brief/2026/eb_26-14" target="_blank">Richmond Fed: CDFIs as a Means to Overcome Market Failures (2026)</a>
+    <a href="https://home.treasury.gov/system/files/136/Financing-Small-Business-Landscape-and-Recommendations.pdf" target="_blank">Treasury: Financing Small Business Landscape (Jan 2025)</a>
+    <a href="https://www.americanbanker.com/opinion/the-cdfi-boom-is-over-now-its-time-to-reckon-with-the-future" target="_blank">American Banker: "The CDFI Boom Is Over"</a>
+  </div>
+</section>
+
+<!-- AI UNDERWRITING -->
+<section id="underwriting">
+  <h2>AI Underwriting: What the Evidence Actually Shows</h2>
+
+  <div class="verdict danger">
+    <div class="verdict-icon">❌</div>
+    <div>
+      <h3>The "10x Approval Rate" Claim</h3>
+      <p>No study, regulatory filing, or peer-reviewed paper documents anything close to a 10x (1,000%) approval rate increase from AI underwriting. The best documented real-world gain is <strong>27–44%</strong> (Upstart/CFPB no-action letter, 2017–2022). A CDFI approval rate of 27% × 10 = 270% — mathematically impossible.</p>
+    </div>
+  </div>
+
+  <h3>Documented AI Underwriting Gains (Credible Sources)</h3>
+  <table>
+    <thead><tr><th>Source</th><th>Claimed Gain</th><th>Methodology</th><th>Reliability</th></tr></thead>
+    <tbody>
+      <tr><td>Upstart / CFPB No-Action Letter</td><td>27–44% more approvals at same loss rate</td><td>CFPB regulatory review</td><td><span class="badge badge-green">High</span></td></tr>
+      <tr><td>"Invisible Primes" (NBER Working Paper 29840)</td><td>15–30% approval expansion for thin-file borrowers</td><td>Peer-reviewed, controlled</td><td><span class="badge badge-green">High</span></td></tr>
+      <tr><td>FinRegLab Six-Lender Study</td><td>Cash flow data "at least as well as" FICO</td><td>Six nonbank lenders, fair lending analysis</td><td><span class="badge badge-green">High</span></td></tr>
+      <tr><td>Judi.ai / Vancity (self-reported)</td><td>"20% more approvals"; 330% more loans funded; 3x throughput</td><td>Marketing document, no independent verification</td><td><span class="badge badge-red">Low</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout yellow">
+    <strong>What "10x" likely actually means:</strong> Judi.ai's Vancity case study shows processing time fell from ~4 hours to ~5 minutes — a ~48x throughput improvement. Loans funded increased 330% (3.3x). These are real gains, but they're <strong>throughput metrics, not approval rate metrics</strong>. Conflating them is either sloppy or misleading.
+  </div>
+
+  <h3>What Happened When Fintechs Expanded Credit Rapidly with AI</h3>
+  <table>
+    <thead><tr><th>Company</th><th>What Happened</th></tr></thead>
+    <tbody>
+      <tr><td>Upstart (2022)</td><td>Model trained on low-rate data failed when rates rose. Actual defaults exceeded predictions. SEC subpoena. Securities fraud lawsuit. Conversion rate dropped. Had to tighten standards.</td></tr>
+      <tr><td>OnDeck</td><td>Net losses of $85.5M in 2016, $14.3M in 2017. Provision rates 7.4–7.5%.</td></tr>
+      <tr><td>Kabbage</td><td>Filed Chapter 11 in 2023 to wind down PPP portfolio obligations.</td></tr>
+      <tr><td>LendingClub</td><td>Forecast $69–84M net loss in 2017. All major fintechs tightened credit after 2016–17 default spikes.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Fair Lending Risk</h3>
+  <div class="callout red">
+    <strong>CFPB Circular 2023-03:</strong> AI "black box" decisions require specific, accurate adverse action notices. Generic checklist reasons are not acceptable. Generating compliant ECOA adverse action notices from ML models is "the most technically difficult explainability challenge" for lenders (FinRegLab).
+  </div>
+  <div class="callout red">
+    <strong>Massachusetts AG v. Earnest (July 2025):</strong> $2.5M settlement for AI underwriting producing disparate impact on Black, Hispanic, and non-citizen applicants. The model used a "Cohort Default Rate" variable that functioned as a racial proxy. The company never tested its models for disparate impact. CDFIs' borrower bases are predominantly minority — this risk is acute.
+  </div>
+
+  <h3>Who Bears the Credit Risk?</h3>
+  <p>This is the central structural problem. Moonwake controls underwriting decisions but takes <strong>zero credit risk</strong>. CDFIs bear all losses on their balance sheets. If the AI model fails under stress (as Upstart's did in 2022), CDFIs absorb the consequences. With a median self-sufficiency ratio of 35% and business lender charge-offs already at a "review period high" of 4.7%, CDFIs cannot absorb a large loss spike.</p>
+
+  <div class="source-list">
+    <h3>Key Sources</h3>
+    <a href="https://files.consumerfinance.gov/f/documents/cfpb_upstart-network-inc_no-action-letter-application_2020-11.pdf" target="_blank">CFPB / Upstart No-Action Letter Application</a>
+    <a href="https://www.nber.org/system/files/working_papers/w29840/w29840.pdf" target="_blank">Invisible Primes: Fintech Lending with Alternative Data (NBER 29840)</a>
+    <a href="https://finreglab.org/research/cash-flow-data-in-underwriting-credit/" target="_blank">FinRegLab: Cash-Flow Data in Credit Underwriting</a>
+    <a href="https://files.consumerfinance.gov/f/documents/cfpb_adverse_action_notice_circular_2023-09.pdf" target="_blank">CFPB Circular 2023-03: Adverse Action Notices and AI</a>
+    <a href="https://www.cfsreview.com/2025/07/massachusetts-ag-settles-fair-lending-action-based-upon-ai-underwriting-model/" target="_blank">Massachusetts AG Settlement with Earnest on AI Underwriting (July 2025)</a>
+    <a href="https://judi.ai/blog/grows-smb-membership-by-transforming-the-lending-process/" target="_blank">Judi.ai Vancity Case Study (self-published)</a>
+    <a href="https://www.aerisinsight.com/2026/04/30/cdfis-have-solid-2025-operating-results-showing-resilience-despite-numerous-challenges-while-capital-foundations-remain-strong-growth-appears-to-slow/" target="_blank">Aeris: CDFI Business Lender Charge-offs at Review Period High (2026)</a>
+  </div>
+</section>
+
+<!-- TECH LANDSCAPE -->
+<section id="landscape">
+  <h2>CDFI Technology Landscape</h2>
+
+  <div class="callout">
+    <strong>The gap is real</strong> — no comprehensive AI-native lending platform exists for CDFIs today. But the market isn't empty, and the industry is moving. A $75–100M greenfield build faces adoption risk and competes with emerging purpose-built tools.
+  </div>
+
+  <h3>OFN Innovation Initiative — The Industry's Own Effort</h3>
+  <p>OFN + MassMutual Foundation announced a <strong>$25M partnership</strong> in October 2024, running 2025–2029. The initiative covers five pillars: capital, product expansion, policy, talent, and technology. However, the first deliverable — the Capital Solutions Accelerator Demo Day (April 2026) — focused entirely on <strong>capitalization solutions</strong>, not technology platforms. The technology pillar is the least developed so far. Mastercard Strive is a co-partner.</p>
+
+  <h3>Existing CDFI-Specific Tools</h3>
+  <table>
+    <thead><tr><th>Tool</th><th>What It Does</th><th>Maturity</th><th>Relevance</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SPARK</strong></td><td>Purpose-built SBA 7(a) LOS for CDFIs; reduced CRF processing ~40%; integrates E-TRAN, FICO, Equifax, PolicyMap</td><td>Acquired by Arcadea Group 2023</td><td><span class="badge badge-green">Most relevant existing platform</span></td></tr>
+      <tr><td><strong>Aloan</strong></td><td>AI underwriting for CDFIs; 50–70% cost reduction per deal; generates CDFI Fund TLR documentation; low five-figure annual pricing</td><td>Commercial</td><td><span class="badge badge-green">Direct competitor</span></td></tr>
+      <tr><td><strong>Kita</strong></td><td>AI-native LOS; Y Combinator W26; $4.5M seed (Aug 2026); AI agents handle document analysis, spreading, memo drafting</td><td>Seed stage</td><td><span class="badge badge-blue">Emerging</span></td></tr>
+      <tr><td><strong>Builders Patch</strong></td><td>Affordable housing CDFI deal management; AI underwriting; $2.1M ARR; NYC HDC client</td><td>Commercial</td><td><span class="badge badge-blue">Housing CDFIs</span></td></tr>
+      <tr><td><strong>LiftFund MMS</strong></td><td>Microloan risk scoring; 14+ CDFI licensees since 2008; saves ~2 days per origination</td><td>Mature but dated</td><td><span class="badge badge-yellow">Legacy</span></td></tr>
+      <tr><td><strong>Baker Hill UN/FY</strong></td><td>AI-driven commercial lending platform; launched Nov 2025; $7B+/month in originations</td><td>Commercial (bank-focused)</td><td><span class="badge badge-yellow">Not CDFI-specific</span></td></tr>
+      <tr><td><strong>nCino</strong></td><td>Cloud banking platform; 2,700+ customers; expensive for smaller CDFIs</td><td>Commercial (bank-focused)</td><td><span class="badge badge-yellow">Too expensive/complex</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Philanthropic Capital Already in This Space</h3>
+  <table>
+    <thead><tr><th>Funder</th><th>Program</th><th>Amount</th><th>Tech Focus</th></tr></thead>
+    <tbody>
+      <tr><td>MassMutual Foundation</td><td>OFN Innovation Initiative</td><td>$25M (2024–2029)</td><td>Technology is one of five pillars; so far focused on capitalization</td></tr>
+      <tr><td>Google.org</td><td>OFN CDFI Technology Grant Program</td><td>$11M grants + $8.5M lending</td><td>Most explicitly tech-focused; 55 CDFIs; pro bono UX/product coaches</td></tr>
+      <tr><td>JPMorgan Chase</td><td>PRO Neighborhoods</td><td>$125M+ (2016–2021)</td><td>Flexible; one grantee built a client system sold to 40+ CDFIs</td></tr>
+      <tr><td>Wells Fargo</td><td>Open for Business Fund</td><td>$420M total; $250M to CDFIs</td><td>Flexible — CDFIs could use for tech; not directed</td></tr>
+      <tr><td>MacKenzie Scott</td><td>Direct giving</td><td>$1.3B+ to 100+ CDFIs</td><td>Unrestricted; CDFIs chose own priorities</td></tr>
+    </tbody>
+  </table>
+
+  <p>Estimated philanthropic capital <em>explicitly earmarked</em> for CDFI technology: <strong>$50–75M over five years</strong> — modest relative to the scale of the problem across 1,378 certified institutions with $446B in combined assets.</p>
+
+  <h3>Better Alternatives to a $75–100M Greenfield Build</h3>
+  <table>
+    <thead><tr><th>Alternative</th><th>Estimated Reach</th></tr></thead>
+    <tbody>
+      <tr><td>Fund SPARK modernization + AI layer + distribution to 200 CDFIs</td><td>Upgrade most CDFI-specific existing platform; ~200 CDFIs</td></tr>
+      <tr><td>Fund Aloan/Kita ($15M) + CDFI adoption subsidies ($60M) + data commons ($20M)</td><td>Back emerging AI tools + fund adoption across 300+ CDFIs</td></tr>
+      <tr><td>Fund OFN Innovation Initiative technology pillar + adoption grants</td><td>Leverage existing $25M investment and institutional infrastructure</td></tr>
+      <tr><td>Fund Lendistry expansion ($50M capital + $25M tech)</td><td>Already #2 non-bank SBA 7(a) lender; $10B+ deployed; proven platform</td></tr>
+      <tr><td>Unrestricted CDFI capacity grants (Wells Fargo/Scott model)</td><td>Let CDFIs choose their tech; at $200K/CDFI = 375–500 institutions</td></tr>
+    </tbody>
+  </table>
+
+  <div class="source-list">
+    <h3>Key Sources</h3>
+    <a href="https://www.ofn.org/current-initiatives/cdfi-innovation-initiative/" target="_blank">OFN CDFI Innovation Initiative</a>
+    <a href="https://www.ofn.org/news/opportunity-finance-network-and-massmutual-foundation-announce-25-million-innovation-partnership-to-scale-the-cdfi-industry/" target="_blank">OFN + MassMutual $25M Announcement</a>
+    <a href="https://aloan.ai/industries/cdfis" target="_blank">Aloan AI for CDFIs</a>
+    <a href="https://www.kita.ai/blog/best-los-cdfis-credit-unions" target="_blank">Kita Intelligent LOS</a>
+    <a href="https://lendwithspark.com/our-process/" target="_blank">SPARK Platform</a>
+    <a href="https://www.ofn.org/past-initiatives/ofn-cdfi-technology-grant-program-supported-by-google-org/" target="_blank">Google.org CDFI Technology Grant Program</a>
+    <a href="https://www.datakind.org/wp-content/uploads/2024/05/CDFI-Landscape-Final-Updated-5-14-24.pdf" target="_blank">DataKind: CDFI Technology Landscape (2024)</a>
+    <a href="https://www.americanbanker.com/opinion/the-cdfi-boom-is-over-now-its-time-to-reckon-with-the-future" target="_blank">American Banker: CDFI Boom Is Over</a>
+  </div>
+</section>
+
+<!-- VERDICT -->
+<section id="verdict">
+  <h2>Overall Assessment</h2>
+
+  <table>
+    <thead><tr><th>Dimension</th><th>Assessment</th><th>Rating</th></tr></thead>
+    <tbody>
+      <tr><td>Problem is real</td><td>Ops constraints, tech gaps, and demand are all documented and severe</td><td><span class="badge badge-green">Confirmed</span></td></tr>
+      <tr><td>Operational constraint thesis</td><td>Directionally correct — staffing/tech outrank capital in Fed survey</td><td><span class="badge badge-green">Supported</span></td></tr>
+      <tr><td>"No capital constraint" framing</td><td>63% cite capital barriers; 81% expecting capital cuts say they can't meet demand</td><td><span class="badge badge-yellow">Overstated</span></td></tr>
+      <tr><td>"10x approval rate" claim</td><td>Mathematically impossible. Best documented gain: 44%. Misleading or fabricated.</td><td><span class="badge badge-red">False</span></td></tr>
+      <tr><td>Moonwake's technical capability</td><td>Website shows a strategy consultancy with no lending product</td><td><span class="badge badge-red">Unverified</span></td></tr>
+      <tr><td>Affiliate lending regulatory risk</td><td>True lender doctrine, CFPB adverse action, fair lending — all unresolved</td><td><span class="badge badge-red">High risk</span></td></tr>
+      <tr><td>Credit risk architecture</td><td>Moonwake takes zero risk; CDFIs bear all losses — moral hazard</td><td><span class="badge badge-red">Structural flaw</span></td></tr>
+      <tr><td>Market precedent at proposed scale</td><td>No affiliate lending platform has done this for CDFIs at any scale</td><td><span class="badge badge-red">No precedent</span></td></tr>
+      <tr><td>Better alternatives exist</td><td>SPARK, Aloan, Kita, Lendistry, OFN Initiative — all more proven</td><td><span class="badge badge-yellow">Yes</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Diligence Questions to Demand Answers To</h3>
+  <ul>
+    <li>What specific, measurable lending technology has Moonwake actually built? Where is it deployed today?</li>
+    <li>What exactly does "10x approval rate" mean? Provide the methodology and source.</li>
+    <li>Who bears credit losses when AI underwriting produces elevated defaults? What contractual protections do CDFIs have?</li>
+    <li>Has outside counsel reviewed the true lender doctrine risk in the proposed affiliate structure?</li>
+    <li>Has any CDFI signed a binding letter of intent to participate?</li>
+    <li>How does this compare to funding Lendistry, SPARK/Arcadea, or OFN's Innovation Initiative at the same cost?</li>
+    <li>What is Moonwake's plan if CFPB or a state AG determines the CDFI is not the true lender?</li>
+  </ul>
+
+  <div class="verdict danger" style="margin-top: 2rem;">
+    <div class="verdict-icon">⚠️</div>
+    <div>
+      <h3>Recommendation</h3>
+      <p><strong>Do not fund as proposed.</strong> The problem is real and important. But the "10x" claim is false and disqualifying; the entity appears misrepresented; and the credit risk architecture (tech vendor takes none, CDFIs take all) creates a moral hazard a philanthropy should not underwrite. If the OpenAI Foundation wants to move capital into CDFI technology, better-targeted alternatives exist that could reach more institutions with less risk.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Research conducted October 2026 · Sources: Federal Reserve, OFN, CDFI Fund, Aeris, FinRegLab, NBER, CFPB · Confidential
+</footer>
+
+<script>
+  function show(id, el) {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo(0, 0);
+    return false;
+  }
+</script>
+</body>
+</html>
